@@ -2,9 +2,20 @@
 src = "src"
 out = "out"
 libs = ["lib"]
+solc_version = "0.8.24"
+
+# Required for OpenZeppelin Foundry Upgrades
+extra_output = ["storageLayout"]
+extra_output_files = ["storageLayout"]
+ast = true
+build_info = true
+ffi = true
+
 remappings = [
-    "@openzeppelin=lib/openzeppelin-contracts/"
+    "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
+    "@openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+    "@openzeppelin-foundry-upgrades/=lib/openzeppelin-foundry-upgrades/src/",
+    "forge-std/=lib/forge-std/src/"
 ]
 
-
-# See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
+fs_permissions = [{ access = "read", path = "out" }]
