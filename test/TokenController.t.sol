@@ -606,7 +606,7 @@ contract TokenControllerTest is Test {
     //     controller.registerAsset("GOLD", address(goldToken));
     //     goldToken.transferOwnership(address(controller));
     //     string[] memory assets = new string[](2);
-    //     assets[0] = "GOLD";
+    //     assets[0] = "GOLD";y
     //     assets[1] = "SILVER";
     //     address[] memory recipients = new address[](2);
     //     recipients[0] = user;
