@@ -9,21 +9,13 @@ pragma solidity ^0.8.24;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
-import {
-    ReentrancyGuard
-} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 interface IAssetToken {
     function mint(address to, uint256 amount) external;
     function burnFrom(address from, uint256 amount) external;
-    function batchMint(
-        address[] calldata tos,
-        uint256[] calldata amounts
-    ) external;
-    function batchBurn(
-        address[] calldata froms,
-        uint256[] calldata amounts
-    ) external;
+    function batchMint(address[] calldata tos, uint256[] calldata amounts) external;
+    function batchBurn(address[] calldata froms, uint256[] calldata amounts) external;
 }
 
 contract TokenController is Ownable, Pausable, ReentrancyGuard {
@@ -42,42 +34,15 @@ contract TokenController is Ownable, Pausable, ReentrancyGuard {
     // -------------------------
     // Events
     // -------------------------
-    event AssetRegistered(
-        bytes32 indexed assetId,
-        string assetName,
-        address token,
-        address custodyWallet
-    );
+    event AssetRegistered(bytes32 indexed assetId, string assetName, address token, address custodyWallet);
     event AssetUnregistered(bytes32 indexed assetId, string assetName);
-    event CustodyWalletUpdated(
-        bytes32 indexed assetId,
-        address oldWallet,
-        address newWallet
-    );
+    event CustodyWalletUpdated(bytes32 indexed assetId, address oldWallet, address newWallet);
 
-    event MintPerformed(
-        bytes32 indexed assetId,
-        address indexed to,
-        uint256 amount,
-        address indexed operator
-    );
-    event BurnPerformed(
-        bytes32 indexed assetId,
-        address indexed from,
-        uint256 amount,
-        address indexed operator
-    );
+    event MintPerformed(bytes32 indexed assetId, address indexed to, uint256 amount, address indexed operator);
+    event BurnPerformed(bytes32 indexed assetId, address indexed from, uint256 amount, address indexed operator);
 
-    event BatchMintPerformed(
-        bytes32 indexed assetId,
-        uint256 totalAmount,
-        address indexed operator
-    );
-    event BatchBurnPerformed(
-        bytes32 indexed assetId,
-        uint256 totalAmount,
-        address indexed operator
-    );
+    event BatchMintPerformed(bytes32 indexed assetId, uint256 totalAmount, address indexed operator);
+    event BatchBurnPerformed(bytes32 indexed assetId, uint256 totalAmount, address indexed operator);
 
     // -------------------------
     // Errors
@@ -99,9 +64,7 @@ contract TokenController is Ownable, Pausable, ReentrancyGuard {
     // INTERNAL HELPERS
     // -------------------------
 
-    function _getAsset(
-        string calldata name
-    ) internal view returns (bytes32 id, Asset memory A) {
+    function _getAsset(string calldata name) internal view returns (bytes32 id, Asset memory A) {
         id = keccak256(abi.encodePacked(name));
         A = assets[id];
         if (!A.exists) revert AssetNotRegistered(id);
@@ -111,32 +74,27 @@ contract TokenController is Ownable, Pausable, ReentrancyGuard {
     // ADMIN: Register / Unregister
     // -------------------------
 
-    function registerAsset(
-        string calldata assetName,
-        address token,
-        address custodyWallet
-    ) external onlyOwner whenNotPaused {
+    function registerAsset(string calldata assetName, address token, address custodyWallet)
+        external
+        onlyOwner
+        whenNotPaused
+    {
         if (bytes(assetName).length == 0) revert InvalidAssetName();
-        if (token == address(0) || custodyWallet == address(0))
+        if (token == address(0) || custodyWallet == address(0)) {
             revert ZeroAddress();
+        }
 
         bytes32 id = keccak256(abi.encodePacked(assetName));
         if (assets[id].exists) revert AssetAlreadyRegistered(id);
 
-        assets[id] = Asset({
-            token: token,
-            custodyWallet: custodyWallet,
-            exists: true
-        });
+        assets[id] = Asset({token: token, custodyWallet: custodyWallet, exists: true});
 
         assetIds.push(id);
 
         emit AssetRegistered(id, assetName, token, custodyWallet);
     }
 
-    function unregisterAsset(
-        string calldata assetName
-    ) external onlyOwner whenNotPaused {
+    function unregisterAsset(string calldata assetName) external onlyOwner whenNotPaused {
         bytes32 id = keccak256(abi.encodePacked(assetName));
         Asset memory A = assets[id];
         if (!A.exists) revert AssetNotRegistered(id);
@@ -161,10 +119,7 @@ contract TokenController is Ownable, Pausable, ReentrancyGuard {
     // ADMIN: Custody Wallet Update
     // -------------------------
 
-    function changeCustodyWallet(
-        string calldata assetName,
-        address newWallet
-    ) external onlyOwner whenNotPaused {
+    function changeCustodyWallet(string calldata assetName, address newWallet) external onlyOwner whenNotPaused {
         if (newWallet == address(0)) revert ZeroAddress();
 
         (bytes32 id, Asset memory A) = _getAsset(assetName);
@@ -179,9 +134,7 @@ contract TokenController is Ownable, Pausable, ReentrancyGuard {
     // GETTERS
     // -------------------------
 
-    function getAssetTokenAddress(
-        string calldata assetName
-    ) external view returns (address) {
+    function getAssetTokenAddress(string calldata assetName) external view returns (address) {
         (, Asset memory A) = _getAsset(assetName);
         return A.token;
     }
@@ -195,11 +148,12 @@ contract TokenController is Ownable, Pausable, ReentrancyGuard {
     // -------------------------
 
     /// Mint to arbitrary address (not custody wallet)
-    function mint(
-        string calldata assetName,
-        address to,
-        uint256 amount
-    ) external onlyOwner whenNotPaused nonReentrant {
+    function mint(string calldata assetName, address to, uint256 amount)
+        external
+        onlyOwner
+        whenNotPaused
+        nonReentrant
+    {
         if (to == address(0)) revert ZeroAddress();
 
         (bytes32 id, Asset memory A) = _getAsset(assetName);
@@ -209,21 +163,24 @@ contract TokenController is Ownable, Pausable, ReentrancyGuard {
     }
 
     /// Mint only to custody wallet
-    function mintToCustodyWallet(
-        string calldata assetName,
-        uint256 amount
-    ) external onlyOwner whenNotPaused nonReentrant {
+    function mintToCustodyWallet(string calldata assetName, uint256 amount)
+        external
+        onlyOwner
+        whenNotPaused
+        nonReentrant
+    {
         (bytes32 id, Asset memory A) = _getAsset(assetName);
         IAssetToken(A.token).mint(A.custodyWallet, amount);
 
         emit MintPerformed(id, A.custodyWallet, amount, msg.sender);
     }
 
-    function burn(
-        string calldata assetName,
-        address from,
-        uint256 amount
-    ) external onlyOwner whenNotPaused nonReentrant {
+    function burn(string calldata assetName, address from, uint256 amount)
+        external
+        onlyOwner
+        whenNotPaused
+        nonReentrant
+    {
         if (from == address(0)) revert ZeroAddress();
 
         (bytes32 id, Asset memory A) = _getAsset(assetName);
@@ -233,10 +190,12 @@ contract TokenController is Ownable, Pausable, ReentrancyGuard {
     }
 
     /// Burn tokens from custody wallet
-    function burnFromCustodyWallet(
-        string calldata assetName,
-        uint256 amount
-    ) external onlyOwner whenNotPaused nonReentrant {
+    function burnFromCustodyWallet(string calldata assetName, uint256 amount)
+        external
+        onlyOwner
+        whenNotPaused
+        nonReentrant
+    {
         (bytes32 id, Asset memory A) = _getAsset(assetName);
         IAssetToken(A.token).burnFrom(A.custodyWallet, amount);
 
@@ -247,11 +206,12 @@ contract TokenController is Ownable, Pausable, ReentrancyGuard {
     // BATCH MINT / BATCH BURN
     // -------------------------
 
-    function batchMint(
-        string calldata assetName,
-        address[] calldata tos,
-        uint256[] calldata amounts
-    ) external onlyOwner whenNotPaused nonReentrant {
+    function batchMint(string calldata assetName, address[] calldata tos, uint256[] calldata amounts)
+        external
+        onlyOwner
+        whenNotPaused
+        nonReentrant
+    {
         uint256 len = tos.length;
         if (len == 0 || len != amounts.length) revert LengthMismatch();
 
@@ -269,11 +229,12 @@ contract TokenController is Ownable, Pausable, ReentrancyGuard {
         emit BatchMintPerformed(id, total, msg.sender);
     }
 
-    function batchBurn(
-        string calldata assetName,
-        address[] calldata froms,
-        uint256[] calldata amounts
-    ) external onlyOwner whenNotPaused nonReentrant {
+    function batchBurn(string calldata assetName, address[] calldata froms, uint256[] calldata amounts)
+        external
+        onlyOwner
+        whenNotPaused
+        nonReentrant
+    {
         uint256 len = froms.length;
         if (len == 0 || len != amounts.length) revert LengthMismatch();
 

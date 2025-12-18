@@ -9,12 +9,8 @@ pragma solidity ^0.8.24;
 
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {
-    ERC20Pausable
-} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Pausable.sol";
-import {
-    ERC20Permit
-} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
+import {ERC20Pausable} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Pausable.sol";
+import {ERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 
 contract MyToken is ERC20, Ownable, ERC20Pausable, ERC20Permit {
     address public controller;
@@ -32,10 +28,7 @@ contract MyToken is ERC20, Ownable, ERC20Pausable, ERC20Permit {
     // -----------------------------
     // Events
     // -----------------------------
-    event ControllerUpdated(
-        address indexed oldController,
-        address indexed newController
-    );
+    event ControllerUpdated(address indexed oldController, address indexed newController);
 
     // -----------------------------
     // Errors
@@ -49,10 +42,7 @@ contract MyToken is ERC20, Ownable, ERC20Pausable, ERC20Permit {
     // Constructor
     // -----------------------------
 
-    constructor(
-        string memory name,
-        string memory symbol
-    ) Ownable(msg.sender) ERC20(name, symbol) ERC20Permit(name) {}
+    constructor(string memory name, string memory symbol) Ownable(msg.sender) ERC20(name, symbol) ERC20Permit(name) {}
 
     // -----------------------------
     // Functions
@@ -79,10 +69,7 @@ contract MyToken is ERC20, Ownable, ERC20Pausable, ERC20Permit {
         _mint(to, amount);
     }
 
-    function batchMint(
-        address[] calldata tos,
-        uint256[] calldata amounts
-    ) external onlyController {
+    function batchMint(address[] calldata tos, uint256[] calldata amounts) external onlyController {
         uint256 len = tos.length;
         if (len != amounts.length) revert LengthMismatch();
         if (len == 0) revert EmptyArray();
@@ -103,10 +90,7 @@ contract MyToken is ERC20, Ownable, ERC20Pausable, ERC20Permit {
         _burn(from, amount);
     }
 
-    function batchBurn(
-        address[] calldata froms,
-        uint256[] calldata amounts
-    ) external onlyController {
+    function batchBurn(address[] calldata froms, uint256[] calldata amounts) external onlyController {
         uint256 len = froms.length;
         if (len == 0 || len != amounts.length) revert LengthMismatch();
 
@@ -118,11 +102,7 @@ contract MyToken is ERC20, Ownable, ERC20Pausable, ERC20Permit {
         }
     }
 
-    function _update(
-        address from,
-        address to,
-        uint256 value
-    ) internal override(ERC20, ERC20Pausable) {
+    function _update(address from, address to, uint256 value) internal override(ERC20, ERC20Pausable) {
         super._update(from, to, value);
     }
 }

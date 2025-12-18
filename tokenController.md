@@ -15,8 +15,6 @@ Emergency pause
 
 Reentrancy protection
 
-This contract is suitable for custodial platforms, RWAs (gold, invoices, credits), and controlled-supply tokens.
-
 ## Key Features
 
 ✅ Supports multiple ERC20 assets
