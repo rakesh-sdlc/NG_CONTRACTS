@@ -148,27 +148,14 @@ contract TokenController is Ownable, Pausable, ReentrancyGuard {
     // -------------------------
 
     /// Mint to arbitrary address (not custody wallet)
-    function mint(string calldata assetName, address to, uint256 amount)
-        external
-        onlyOwner
-        whenNotPaused
-        nonReentrant
-    {
-        if (to == address(0)) revert ZeroAddress();
-
+    function mint(string calldata assetName, address to, uint256 amount) external onlyOwner whenNotPaused {
         (bytes32 id, Asset memory A) = _getAsset(assetName);
         IAssetToken(A.token).mint(to, amount);
-
         emit MintPerformed(id, to, amount, msg.sender);
     }
 
     /// Mint only to custody wallet
-    function mintToCustodyWallet(string calldata assetName, uint256 amount)
-        external
-        onlyOwner
-        whenNotPaused
-        nonReentrant
-    {
+    function mintToCustodyWallet(string calldata assetName, uint256 amount) external onlyOwner whenNotPaused {
         (bytes32 id, Asset memory A) = _getAsset(assetName);
         IAssetToken(A.token).mint(A.custodyWallet, amount);
 
@@ -181,11 +168,8 @@ contract TokenController is Ownable, Pausable, ReentrancyGuard {
         whenNotPaused
         nonReentrant
     {
-        if (from == address(0)) revert ZeroAddress();
-
         (bytes32 id, Asset memory A) = _getAsset(assetName);
         IAssetToken(A.token).burnFrom(from, amount);
-
         emit BurnPerformed(id, from, amount, msg.sender);
     }
 
@@ -210,7 +194,6 @@ contract TokenController is Ownable, Pausable, ReentrancyGuard {
         external
         onlyOwner
         whenNotPaused
-        nonReentrant
     {
         uint256 len = tos.length;
         if (len == 0 || len != amounts.length) revert LengthMismatch();
@@ -233,17 +216,18 @@ contract TokenController is Ownable, Pausable, ReentrancyGuard {
         external
         onlyOwner
         whenNotPaused
-        nonReentrant
     {
         uint256 len = froms.length;
         if (len == 0 || len != amounts.length) revert LengthMismatch();
 
         (bytes32 id, Asset memory A) = _getAsset(assetName);
 
+        uint256[] calldata _amounts = amounts;
         uint256 total;
-        for (uint256 i = 0; i < len; ++i) {
+        for (uint256 i; i < len;) {
             unchecked {
-                total += amounts[i];
+                total += _amounts[i];
+                ++i;
             }
         }
 
