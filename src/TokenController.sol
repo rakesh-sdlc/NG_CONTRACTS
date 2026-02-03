@@ -35,7 +35,7 @@ contract TokenController is Ownable, Pausable, ReentrancyGuard {
     // Events
     // -------------------------
     event AssetRegistered(bytes32 indexed assetId, string assetName, address token, address custodyWallet);
-    event AssetUnregistered(bytes32 indexed assetId, string assetName);
+    event AssetUnregistered(bytes32 indexed assetId, string assetName, address token);
     event CustodyWalletUpdated(bytes32 indexed assetId, address oldWallet, address newWallet);
 
     event MintPerformed(bytes32 indexed assetId, address indexed to, uint256 amount, address indexed operator);
@@ -59,6 +59,18 @@ contract TokenController is Ownable, Pausable, ReentrancyGuard {
     // -------------------------
 
     constructor() Ownable(msg.sender) {}
+
+    // -------------------------
+    // Pause / Unpause
+    // -------------------------
+
+    function pause() external onlyOwner {
+        _pause();
+    }
+
+    function unpause() external onlyOwner {
+        _unpause();
+    }
 
     // -------------------------
     // INTERNAL HELPERS
@@ -112,7 +124,7 @@ contract TokenController is Ownable, Pausable, ReentrancyGuard {
             }
         }
 
-        emit AssetUnregistered(id, assetName);
+        emit AssetUnregistered(id, assetName, A.token);
     }
 
     // -------------------------
@@ -143,6 +155,19 @@ contract TokenController is Ownable, Pausable, ReentrancyGuard {
         return assetIds;
     }
 
+    function getAsset(bytes32 id) external view returns (address token, address custodyWallet, bool exists) {
+        Asset memory a = assets[id];
+        return (a.token, a.custodyWallet, a.exists);
+    }
+
+    function getAssetId(uint256 index) external view returns (bytes32) {
+        return assetIds[index];
+    }
+
+    function getAssetCount() external view returns (uint256) {
+        return assetIds.length;
+    }
+
     // -------------------------
     // SINGLE MINT / BURN
     // -------------------------
@@ -158,7 +183,6 @@ contract TokenController is Ownable, Pausable, ReentrancyGuard {
     function mintToCustodyWallet(string calldata assetName, uint256 amount) external onlyOwner whenNotPaused {
         (bytes32 id, Asset memory A) = _getAsset(assetName);
         IAssetToken(A.token).mint(A.custodyWallet, amount);
-
         emit MintPerformed(id, A.custodyWallet, amount, msg.sender);
     }
 

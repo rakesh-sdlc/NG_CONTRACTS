@@ -99,7 +99,6 @@ contract MyToken is ERC20, Ownable, ERC20Pausable, ERC20Permit {
         if (len == 0) revert EmptyArray();
         if (len != amounts.length) revert LengthMismatch();
 
-
         address[] calldata _froms = froms;
         uint256[] calldata _amounts = amounts;
 
